@@ -16,7 +16,6 @@ type Server struct {
 	addr       string
 	prefix     string
 	middleware gin.HandlerFunc
-	external   GetRequestMoreData
 }
 
 func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
@@ -27,8 +26,8 @@ func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
 	}
 }
 
-func (s *Server) WithExternalData(g GetRequestMoreData) {
-	s.external = g
+func (s *Server) WithMiddlewarem(m gin.HandlerFunc) {
+	s.middleware = m
 }
 
 // 消息api
@@ -68,20 +67,13 @@ func (s *Server) RouterRegist(r *gin.Engine, prefix string) {
 			"msg":  "Page not found"})
 	})
 	root := r.Group(prefix)
-	root.GET("/proxy/list", ProxyList)
-	root.POST("/apis/create", ApiCreate)
-	root.GET("/apis/:db/list", ApiList)
+	root.GET("/admin/proxy/list", ProxyList)
+	root.POST("/admin/apis/create", ApiCreate)
+	root.GET("/admin/apis/:db/list", ApiList)
 	// query api
-	middlewares := []gin.HandlerFunc{}
-	if s.middleware != nil {
-		middlewares = append(middlewares, s.middleware)
-	}
-	if s.external != nil {
-		middlewares = append(middlewares, externalDataMiddleware(s.external))
-	}
 	var query *gin.RouterGroup
-	if len(middlewares) > 0 {
-		query = root.Group("/query", middlewares...)
+	if s.middleware != nil {
+		query = root.Group("/query", s.middleware)
 	} else {
 		query = root.Group("/query")
 	}
