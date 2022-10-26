@@ -146,6 +146,9 @@ func Query(c *gin.Context) {
 		responseError(c, 400, errors.New("chain not support now."))
 		return
 	}
+	if body.TemplateParameters == nil {
+		body.TemplateParameters = make(map[string]interface{})
+	}
 	if externalData, exits := c.Get("external"); exits {
 		if src, ok := externalData.(map[string]interface{}); ok {
 			maps.Copy(body.TemplateParameters, src)
