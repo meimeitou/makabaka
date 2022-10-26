@@ -82,6 +82,23 @@ func ApiCreate(c *gin.Context) {
 	responseOkWithData(c, a)
 }
 
+func ApiDelete(c *gin.Context) {
+	db := c.Param("db")
+	conn, err := config.DBSet.GetDB(db)
+	if err != nil {
+		responseError(c, 400, err)
+		return
+	}
+	apiName := c.Param("api")
+	apis := conn.GetQuery().Apis
+	info, err := apis.WithContext(c.Request.Context()).Where(apis.Name.Eq(apiName)).Delete()
+	if err != nil {
+		responseError(c, 500, err)
+		return
+	}
+	responseOkWithData(c, info)
+}
+
 func ApiList(c *gin.Context) {
 	db := c.Param("db")
 	conn, err := config.DBSet.GetDB(db)

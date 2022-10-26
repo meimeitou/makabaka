@@ -70,6 +70,7 @@ func (s *Server) RouterRegist(r *gin.Engine, prefix string) {
 	root.GET("/admin/proxy/list", ProxyList)
 	root.POST("/admin/apis/create", ApiCreate)
 	root.GET("/admin/apis/:db/list", ApiList)
+	root.DELETE("/admin/apis/:db/:api", ApiDelete)
 	// query api
 	var query *gin.RouterGroup
 	if s.middleware != nil {
