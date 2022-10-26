@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:10.15
+    environment:
+      POSTGRES_DB: makabaka
+      POSTGRES_USER: makabaka
+      POSTGRES_PASSWORD: makabaka
+    ports:
+    - "5432:5432"
