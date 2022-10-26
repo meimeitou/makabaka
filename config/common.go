@@ -17,6 +17,7 @@ var (
 type Config struct {
 	// Storage Storage
 	AutoMigrate bool   `json:"autoMigrate"`
+	EnableTest  bool   `json:"enableTest"`
 	Log         string `json:"log"`
 	Server      Server
 	Proxy       []Proxy

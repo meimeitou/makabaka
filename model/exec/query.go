@@ -16,6 +16,7 @@ type QueryBuilder struct {
 	query  string
 	values map[string]interface{}
 	db     *db.Conn
+	rawsql string
 }
 
 func NewQueryBuilder(database *db.Conn, query string, values map[string]interface{}) *QueryBuilder {
@@ -24,6 +25,10 @@ func NewQueryBuilder(database *db.Conn, query string, values map[string]interfac
 		db:     database,
 		values: values,
 	}
+}
+
+func (q *QueryBuilder) GetRawSql() string {
+	return q.rawsql
 }
 
 func (q *QueryBuilder) WithFormat(format map[string]string) {
@@ -56,6 +61,7 @@ func (q *QueryBuilder) Exec() ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	q.rawsql = query
 	if strings.Contains(query, "@") && len(q.values) > 0 {
 		rows, err = q.db.Raw(query, q.values).Rows()
 	} else {

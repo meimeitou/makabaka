@@ -26,6 +26,7 @@ type (
 		SqlTemplateResult     map[string]interface{} `json:"sqlTemplateResult"`
 	}
 	QueryParams struct {
+		Test               bool                   `form:"test"`
 		TemplateParameters map[string]interface{} `form:"templateParameters"`
 		ChainParameters    map[string]interface{} `form:"chainParameters"`
 	}
@@ -178,10 +179,23 @@ func Query(c *gin.Context) {
 	}
 	// sql exec
 	builder := exec.NewQueryBuilder(conn, res.SqlTemplate, body.TemplateParameters)
+	if body.Test && config.Cfg.EnableTest {
+		sql, err := builder.TemplateParse()
+		if err != nil {
+			responseError(c, 400, err)
+			return
+		}
+		responseOkWithData(c, sql)
+		return
+	}
 	data, err := builder.Exec()
 	if err != nil {
 		responseError(c, 500, err)
 		return
 	}
-	responseOkWithData(c, data)
+	if config.Cfg.EnableTest {
+		responseMsgWithData(c, builder.GetRawSql(), data)
+	} else {
+		responseOkWithData(c, data)
+	}
 }

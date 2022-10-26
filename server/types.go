@@ -35,6 +35,14 @@ func responseOkWithData(c *gin.Context, data interface{}) {
 	})
 }
 
+func responseMsgWithData(c *gin.Context, msg string, data interface{}) {
+	c.JSON(http.StatusOK, ResponseMsg{
+		ErrorCode: 0,
+		ErrorMsg:  msg,
+		Data:      data,
+	})
+}
+
 type queryPage struct {
 	PageSize int `form:"pageSize"`
 	PageNum  int `form:"pageNum"`
