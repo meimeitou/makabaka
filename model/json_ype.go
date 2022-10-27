@@ -100,6 +100,18 @@ func (jm JSONMap) GormValue(ctx context.Context, db *gorm.DB) clause.Expr {
 	return gorm.Expr("?", string(data))
 }
 
+func (jm JSONMap) ToMapString() (map[string]string, error) {
+	res := make(map[string]string)
+	for key := range jm {
+		str, err := jm.GetString(key)
+		if err != nil {
+			return nil, err
+		}
+		res[key] = str
+	}
+	return res, nil
+}
+
 func (jm JSONMap) MustGetString(key string) string {
 	if val, ok := jm[key]; ok {
 		v, _ := val.(string)

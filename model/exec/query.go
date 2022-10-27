@@ -70,19 +70,6 @@ func (q *QueryBuilder) Exec() ([]map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	// columns, er := rows.ColumnTypes()
-	// if er != nil {
-	// 	log.Println(er)
-	// 	return nil, er
-	// }
-
-	//make一個臨時儲存的地方，並賦予指標
-	// cache := make([]interface{}, columnLength)
-	// for index := range cache {
-	// 	var a interface{}
-	// 	cache[index] = &a
-	// }
-
 	var list []map[string]interface{}
 	for rows.Next() {
 		// ScanRows scan a row into user
@@ -95,11 +82,3 @@ func (q *QueryBuilder) Exec() ([]map[string]interface{}, error) {
 
 	return list, nil
 }
-
-// func (q *Query) FormatRow(data *map[string]interface{}) {
-// 	for key, formats := range q.format {
-// 		if value, ok := (*data)[key]; ok {
-// 			fm := strings.Split(formats, ",")
-// 		}
-// 	}
-// }

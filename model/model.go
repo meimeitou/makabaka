@@ -54,9 +54,9 @@ type Apis struct {
 	Method                string                `json:"method" gorm:"column:method;type:varchar(50);not null;index"`                     // api name// http method
 	Description           string                `json:"description" gorm:"column:description;type:varchar(200);not null"`                // description
 	SqlType               SqlType               `json:"sqlType" gorm:"column:sql_type;not null;index"`
-	SqlTemplate           string                `json:"sqlTemplate" gorm:"column:sql_template;type:varchar(2000);not null"` // sql template
-	SqlTemplateParameters JSONMap               `json:"sqlTemplateParameters" gorm:"column:sql_template_parameters;"`       // template parameters
-	SqlTemplateResult     JSONMap               `json:"sqlTemplateResult" gorm:"column:sql_template_result;"`               // format result
+	SqlTemplate           JSONMap               `json:"sqlTemplate" gorm:"column:sql_template;not null"`                      // sql template
+	SqlTemplateParameters JSONMap               `json:"sqlTemplateParameters" gorm:"column:sql_template_parameters;not null"` // template parameters
+	SqlTemplateResult     JSONMap               `json:"sqlTemplateResult" gorm:"column:sql_template_result;not null"`         // format result
 	// SqlChainParameters    string                `json:"sqlChainParameters"`
 }
 

@@ -46,7 +46,7 @@ func (suite *ModelTestSuite) TestApi() {
 		Name:        "test",
 		Method:      "GET",
 		SqlType:     model.SqlTypeTemplate,
-		SqlTemplate: "",
+		SqlTemplate: model.JSONMap{},
 		SqlTemplateParameters: model.JSONMap{
 			"a": "aa",
 			"b": 1,

@@ -3,9 +3,11 @@ package server
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/meimeitou/makabaka/config"
+	"github.com/meimeitou/makabaka/db"
 	"github.com/meimeitou/makabaka/model"
 	"github.com/meimeitou/makabaka/model/exec"
 	"github.com/meimeitou/makabaka/pkg/bind"
@@ -21,7 +23,7 @@ type (
 		Method                string                 `json:"method"`
 		Description           string                 `json:"desc"`
 		SqlType               string                 `json:"sqlType"`
-		SqlTemplate           string                 `json:"sqlTemplate"`
+		SqlTemplate           map[string]string      `json:"sqlTemplate"`
 		SqlTemplateParameters map[string]interface{} `json:"sqlTemplateParameters"`
 		SqlTemplateResult     map[string]interface{} `json:"sqlTemplateResult"`
 	}
@@ -64,7 +66,7 @@ func ApiCreate(c *gin.Context) {
 		Method:                data.Method,
 		Description:           data.Description,
 		SqlType:               sqlType,
-		SqlTemplate:           data.SqlTemplate,
+		SqlTemplate:           model.FromMapString(data.SqlTemplate),
 		SqlTemplateParameters: data.SqlTemplateParameters,
 		SqlTemplateResult:     data.SqlTemplateResult,
 	}
@@ -177,25 +179,61 @@ func Query(c *gin.Context) {
 		responseError(c, 400, err)
 		return
 	}
-	// sql exec
-	builder := exec.NewQueryBuilder(conn, res.SqlTemplate, body.TemplateParameters)
-	if body.Test && config.Cfg.EnableTest {
-		sql, err := builder.TemplateParse()
-		if err != nil {
-			responseError(c, 400, err)
-			return
-		}
-		responseOkWithData(c, sql)
-		return
-	}
-	data, err := builder.Exec()
+	sqls, err := res.SqlTemplate.ToMapString()
 	if err != nil {
 		responseError(c, 500, err)
 		return
 	}
-	if config.Cfg.EnableTest {
-		responseMsgWithData(c, builder.GetRawSql(), data)
+	// sql exec
+	if body.Test && config.Cfg.EnableTest {
+		queryTest(c, conn, sqls, body.TemplateParameters)
 	} else {
-		responseOkWithData(c, data)
+		queryMulti(c, conn, sqls, body.TemplateParameters)
 	}
+}
+
+func queryMulti(c *gin.Context, conn *db.Conn, sqls map[string]string, values map[string]interface{}) {
+	res := make(map[string]interface{})
+	keys := []string{}
+	rawsql := []string{}
+	for key, sql := range sqls {
+		builder := exec.NewQueryBuilder(conn, sql, values)
+		data, err := builder.Exec()
+		if err != nil {
+			responseError(c, 400, err)
+			return
+		}
+		rawsql = append(rawsql, builder.GetRawSql())
+		keys = append(keys, key)
+		res[key] = data
+	}
+	if len(res) == 1 { // one
+		if config.Cfg.EnableTest {
+			responseMsgWithData(c, strings.Join(rawsql, ";"), res[keys[0]])
+			return
+		}
+		responseOkWithData(c, res[keys[0]])
+	} else if len(res) > 1 { // more
+		if config.Cfg.EnableTest {
+			responseMsgWithData(c, strings.Join(rawsql, ";"), res)
+			return
+		}
+		responseOkWithData(c, res)
+	} else { // zero
+		responseOk(c)
+	}
+
+}
+
+func queryTest(c *gin.Context, conn *db.Conn, sqls map[string]string, values map[string]interface{}) {
+	res := make(map[string]string)
+	for key, sql := range sqls {
+		raw, err := exec.NewQueryBuilder(conn, sql, values).TemplateParse()
+		if err != nil {
+			responseError(c, 400, err)
+			return
+		}
+		res[key] = raw
+	}
+	responseOkWithData(c, res)
 }
