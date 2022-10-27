@@ -205,7 +205,11 @@ func queryMulti(c *gin.Context, conn *db.Conn, sqls map[string]string, values ma
 		}
 		rawsql = append(rawsql, builder.GetRawSql())
 		keys = append(keys, key)
-		res[key] = data
+		if len(data) == 1 {
+			res[key] = data[0]
+		} else {
+			res[key] = data
+		}
 	}
 	if len(res) == 1 { // one
 		if config.Cfg.EnableTest {
