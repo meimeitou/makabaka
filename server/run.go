@@ -12,10 +12,11 @@ import (
 )
 
 type Server struct {
-	logger     *logrus.Logger
-	addr       string
-	prefix     string
-	middleware gin.HandlerFunc
+	logger          *logrus.Logger
+	addr            string
+	prefix          string
+	querymiddleware gin.HandlerFunc
+	adminMiddleware gin.HandlerFunc
 }
 
 func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
@@ -26,8 +27,12 @@ func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
 	}
 }
 
-func (s *Server) WithMiddlewarem(m gin.HandlerFunc) {
-	s.middleware = m
+func (s *Server) QueryMiddleware(m gin.HandlerFunc) {
+	s.querymiddleware = m
+}
+
+func (s *Server) AdminMiddleware(m gin.HandlerFunc) {
+	s.adminMiddleware = m
 }
 
 // 消息api
@@ -67,16 +72,26 @@ func (s *Server) RouterRegist(r *gin.Engine, prefix string) {
 			"msg":  "Page not found"})
 	})
 	root := r.Group(prefix)
-	root.GET("/admin/proxy/list", ProxyList)
-	root.POST("/admin/apis/create", ApiCreate)
-	root.GET("/admin/apis/:db/list", ApiList)
-	root.DELETE("/admin/apis/:db/:api", ApiDelete)
-	// query api
-	var query *gin.RouterGroup
-	if s.middleware != nil {
-		query = root.Group("/query", s.middleware)
-	} else {
-		query = root.Group("/query")
+	{
+		var admin *gin.RouterGroup
+		if s.adminMiddleware != nil {
+			admin = root.Group("/admin", s.adminMiddleware)
+		} else {
+			admin = root.Group("/admin")
+		}
+		admin.GET("/proxy/list", ProxyList)
+		admin.POST("/apis/create", ApiCreate)
+		admin.GET("/apis/:db/list", ApiList)
+		admin.DELETE("/apis/:db/:api", ApiDelete)
 	}
-	query.Any("/:db/:name", Query)
+	{
+		// query api
+		var query *gin.RouterGroup
+		if s.querymiddleware != nil {
+			query = root.Group("/query", s.querymiddleware)
+		} else {
+			query = root.Group("/query")
+		}
+		query.Any("/:db/:name", Query)
+	}
 }
