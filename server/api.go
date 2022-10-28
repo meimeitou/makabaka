@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -120,10 +121,11 @@ func ApiList(c *gin.Context) {
 		data  []*model.Apis
 		count int64
 	)
+	sql := apis.Select(apis.ID, apis.Name, apis.Method, apis.SqlType, apis.CreatedAt)
 	if payload.Name != "" {
-		data, count, err = apis.Where(apis.Name.Like(fmt.Sprintf("%%%s%%", payload.Name))).FindByPage(start, size)
+		data, count, err = sql.Where(apis.Name.Like(fmt.Sprintf("%%%s%%", payload.Name))).FindByPage(start, size)
 	} else {
-		data, count, err = apis.FindByPage(start, size)
+		data, count, err = sql.FindByPage(start, size)
 	}
 	if err != nil {
 		Logger(c).Error(err)
@@ -134,6 +136,26 @@ func ApiList(c *gin.Context) {
 		"count": count,
 		"item":  data,
 	})
+}
+
+func ApiGet(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		responseError(c, 400, fmt.Errorf("参数错误：%v", err))
+		return
+	}
+	db := c.Param("db")
+	conn, err := config.DBSet.GetDB(db)
+	if err != nil {
+		responseError(c, 400, err)
+		return
+	}
+	apis := conn.GetQuery().Apis
+	if _, err := apis.Where(apis.ID.Eq(uint(id))).Delete(); err != nil {
+		responseError(c, 500, err)
+		return
+	}
+	responseOk(c)
 }
 
 func Query(c *gin.Context) {

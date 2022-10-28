@@ -82,6 +82,7 @@ func (s *Server) RouterRegist(r *gin.Engine, prefix string) {
 		admin.GET("/proxy/list", ProxyList)
 		admin.POST("/apis/create", ApiCreate)
 		admin.GET("/apis/:db/list", ApiList)
+		admin.GET("/apis/:db/detail/:id", ApiGet)
 		admin.DELETE("/apis/:db/:api", ApiDelete)
 	}
 	{
