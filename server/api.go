@@ -151,11 +151,12 @@ func ApiGet(c *gin.Context) {
 		return
 	}
 	apis := conn.GetQuery().Apis
-	if _, err := apis.Where(apis.ID.Eq(uint(id))).Delete(); err != nil {
+	var data *model.Apis
+	if data, err = apis.Where(apis.ID.Eq(uint(id))).First(); err != nil {
 		responseError(c, 500, err)
 		return
 	}
-	responseOk(c)
+	responseOkWithData(c, data)
 }
 
 func Query(c *gin.Context) {
