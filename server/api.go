@@ -22,7 +22,7 @@ type (
 		ID                    uint                   `json:"id"`
 		Name                  string                 `json:"name"`
 		Method                string                 `json:"method"`
-		Description           string                 `json:"desc"`
+		Description           string                 `json:"description"`
 		SqlType               string                 `json:"sqlType"`
 		SqlTemplate           map[string]string      `json:"sqlTemplate"`
 		SqlTemplateParameters map[string]interface{} `json:"sqlTemplateParameters"`

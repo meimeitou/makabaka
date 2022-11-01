@@ -16,7 +16,7 @@ const (
 
 func SqlTypeFromStr(tp string) (SqlType, error) {
 	switch tp {
-	case "template":
+	case "template", "":
 		return SqlTypeTemplate, nil
 	case "chain":
 		return SqlTypeChain, nil
