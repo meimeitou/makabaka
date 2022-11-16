@@ -15,7 +15,7 @@ type Server struct {
 	logger          *logrus.Logger
 	addr            string
 	prefix          string
-	querymiddleware gin.HandlerFunc
+	querymiddleware []gin.HandlerFunc
 	adminMiddleware gin.HandlerFunc
 }
 
@@ -27,8 +27,8 @@ func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
 	}
 }
 
-func (s *Server) QueryMiddleware(m gin.HandlerFunc) {
-	s.querymiddleware = m
+func (s *Server) QueryMiddleware(m ...gin.HandlerFunc) {
+	s.querymiddleware = append(s.querymiddleware, m...)
 }
 
 func (s *Server) AdminMiddleware(m gin.HandlerFunc) {
@@ -94,8 +94,8 @@ func (s *Server) RouterRegist(r *gin.Engine, prefix string) {
 	{
 		// query api
 		var query *gin.RouterGroup
-		if s.querymiddleware != nil {
-			query = root.Group("/query", s.querymiddleware)
+		if len(s.querymiddleware) > 0 {
+			query = root.Group("/query", s.querymiddleware...)
 		} else {
 			query = root.Group("/query")
 		}
