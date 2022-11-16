@@ -44,13 +44,19 @@ func (s *Server) Run(g *run.Group) {
 	s.RouterRegist(r, s.prefix)
 
 	srv := &http.Server{
-		Addr:    s.addr,
-		Handler: r,
+		Addr:         s.addr,
+		Handler:      r,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 	g.Add(
 		func() error {
-			if err := srv.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
-				s.logger.Printf("listen: %s\n", err)
+			if err := srv.ListenAndServe(); err != nil {
+				if errors.Is(err, http.ErrServerClosed) {
+					s.logger.Printf("listen: %s\n", err)
+					return nil
+				}
+				s.logger.Error(err)
 			}
 			return nil
 		},

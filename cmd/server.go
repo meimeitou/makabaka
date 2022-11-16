@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"syscall"
 
 	"github.com/meimeitou/makabaka/config"
 	"github.com/meimeitou/makabaka/server"
@@ -66,7 +64,7 @@ func runServe(options serveOptions, logger *logrus.Logger) error {
 		return err
 	}
 	// run all
-	config.G.Add(run.SignalHandler(context.Background(), syscall.SIGTERM, syscall.SIGINT))
+	// config.G.Add(run.SignalHandler(context.Background(), os.Interrupt, syscall.SIGTERM))
 	sv := server.NewServer(logger, c.Server.HTTP, c.Server.Prefix)
 	sv.Run(&config.G)
 	if err := config.G.Run(); err != nil {
