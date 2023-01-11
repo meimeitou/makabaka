@@ -34,9 +34,9 @@ func newApis(db *gorm.DB) apis {
 	_apis.DeletedAt = field.NewUint(tableName, "deleted_at")
 	_apis.Name = field.NewString(tableName, "api_name")
 	_apis.Method = field.NewString(tableName, "method")
-	_apis.Desc = field.NewString(tableName, "desc")
+	_apis.Description = field.NewString(tableName, "description")
 	_apis.SqlType = field.NewInt8(tableName, "sql_type")
-	_apis.SqlTemplate = field.NewString(tableName, "sql_template")
+	_apis.SqlTemplate = field.NewField(tableName, "sql_template")
 	_apis.SqlTemplateParameters = field.NewField(tableName, "sql_template_parameters")
 	_apis.SqlTemplateResult = field.NewField(tableName, "sql_template_result")
 
@@ -55,9 +55,9 @@ type apis struct {
 	DeletedAt             field.Uint
 	Name                  field.String
 	Method                field.String
-	Desc                  field.String
+	Description           field.String
 	SqlType               field.Int8
-	SqlTemplate           field.String
+	SqlTemplate           field.Field
 	SqlTemplateParameters field.Field
 	SqlTemplateResult     field.Field
 
@@ -82,9 +82,9 @@ func (a *apis) updateTableName(table string) *apis {
 	a.DeletedAt = field.NewUint(table, "deleted_at")
 	a.Name = field.NewString(table, "api_name")
 	a.Method = field.NewString(table, "method")
-	a.Desc = field.NewString(table, "desc")
+	a.Description = field.NewString(table, "description")
 	a.SqlType = field.NewInt8(table, "sql_type")
-	a.SqlTemplate = field.NewString(table, "sql_template")
+	a.SqlTemplate = field.NewField(table, "sql_template")
 	a.SqlTemplateParameters = field.NewField(table, "sql_template_parameters")
 	a.SqlTemplateResult = field.NewField(table, "sql_template_result")
 
@@ -110,7 +110,7 @@ func (a *apis) fillFieldMap() {
 	a.fieldMap["deleted_at"] = a.DeletedAt
 	a.fieldMap["api_name"] = a.Name
 	a.fieldMap["method"] = a.Method
-	a.fieldMap["desc"] = a.Desc
+	a.fieldMap["description"] = a.Description
 	a.fieldMap["sql_type"] = a.SqlType
 	a.fieldMap["sql_template"] = a.SqlTemplate
 	a.fieldMap["sql_template_parameters"] = a.SqlTemplateParameters
