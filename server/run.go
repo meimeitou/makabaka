@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
+	"text/template"
 	"time"
 
 	"github.com/gin-gonic/gin"
