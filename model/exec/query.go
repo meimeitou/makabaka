@@ -1,13 +1,11 @@
 package exec
 
 import (
-	"bytes"
 	"database/sql"
-	"fmt"
 	"strings"
-	"text/template"
 
 	"github.com/meimeitou/makabaka/db"
+	"github.com/meimeitou/makabaka/pkg/tpl"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,19 +34,8 @@ func (q *QueryBuilder) WithFormat(format map[string]string) {
 }
 
 func (q *QueryBuilder) TemplateParse() (string, error) {
-	b := &bytes.Buffer{}
-	t := template.New("").Funcs(toType)
-	// t.Funcs()
 	logrus.Debug(q.query, q.values)
-	tpl, err := t.Parse(q.query)
-	if err != nil {
-		return "", fmt.Errorf("模板格式错误: %v", err)
-	}
-	err = tpl.Execute(b, q.values)
-	if err != nil {
-		return "", fmt.Errorf("查询格式验证错误%v", err)
-	}
-	return b.String(), nil
+	return tpl.Parse(q.query, q.values)
 }
 
 func (q *QueryBuilder) Exec() ([]map[string]interface{}, error) {

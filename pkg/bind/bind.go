@@ -7,7 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-var Validate *validator.Validate
+var validate *validator.Validate
 
 var newDate validator.Func = func(fl validator.FieldLevel) bool {
 	date, ok := fl.Field().Interface().(time.Time)
@@ -25,13 +25,18 @@ func ValidateMyVal(fl validator.FieldLevel) bool {
 }
 
 func init() {
-	Validate = validator.New()
-	Validate.RegisterValidation("newDate", newDate)
-	Validate.RegisterValidation("is-awesome", ValidateMyVal)
+	validate = validator.New()
+	validate.RegisterValidation("newDate", newDate)
+	validate.RegisterValidation("is-awesome", ValidateMyVal)
+}
+
+// custom validation
+func RegisterValidation(tag string, fn validator.Func, callValidationEvenIfNull ...bool) {
+	validate.RegisterValidation(tag, fn, callValidationEvenIfNull...)
 }
 
 func ValidateInput(data map[string]interface{}, rules map[string]interface{}) error {
-	res := Validate.ValidateMap(data, rules)
+	res := validate.ValidateMap(data, rules)
 	if len(res) > 0 {
 		return fmt.Errorf("request field not valid: %v", res)
 	}

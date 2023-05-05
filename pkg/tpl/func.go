@@ -1,4 +1,4 @@
-package exec
+package tpl
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	toType = template.FuncMap{
+	funcs = template.FuncMap{
 		"toType": func(data interface{}, target string) (interface{}, error) {
 			return TryConvert(data, target)
 		},
@@ -14,7 +14,6 @@ var (
 )
 
 func TryConvert(val interface{}, target string) (interface{}, error) {
-	// logx.Info(reflect.ValueOf(val).Kind())
 	switch target {
 	case "string":
 		v, ok := val.(string)

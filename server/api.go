@@ -39,29 +39,29 @@ func (a *ApiCreateData) valid() error {
 	return nil
 }
 
-func ProxyList(c *gin.Context) {
-	responseOkWithData(c, config.Cfg.Proxy)
+func (s *Server) ProxyList(c *gin.Context) {
+	s.responseOkWithData(c, config.Cfg.Proxy)
 }
 
-func ApiCreate(c *gin.Context) {
+func (s *Server) ApiCreate(c *gin.Context) {
 	data := ApiCreateData{}
 	if err := c.ShouldBindJSON(&data); err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	Logger(c).Info(data)
 	if err := data.valid(); err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	conn, err := config.DBSet.GetDB(data.DB)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	sqlType, err := model.SqlTypeFromStr(data.SqlType)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	a := model.Apis{
@@ -79,47 +79,47 @@ func ApiCreate(c *gin.Context) {
 	api := conn.GetQuery().Apis
 	if a.ID > 0 {
 		if err := api.Save(&a); err != nil {
-			responseError(c, 500, err)
+			s.responseError(c, 500, err)
 			return
 		}
 	} else {
 		if err := api.Create(&a); err != nil {
-			responseError(c, 500, err)
+			s.responseError(c, 500, err)
 			return
 		}
 	}
-	responseOkWithData(c, a)
+	s.responseOkWithData(c, a)
 }
 
-func ApiDelete(c *gin.Context) {
+func (s *Server) ApiDelete(c *gin.Context) {
 	db := c.Param("db")
 	conn, err := config.DBSet.GetDB(db)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	apiName := c.Param("api")
 	apis := conn.GetQuery().Apis
 	info, err := apis.WithContext(c.Request.Context()).Where(apis.Name.Eq(apiName)).Delete()
 	if err != nil {
-		responseError(c, 500, err)
+		s.responseError(c, 500, err)
 		return
 	}
-	responseOkWithData(c, info)
+	s.responseOkWithData(c, info)
 }
 
-func ApiList(c *gin.Context) {
+func (s *Server) ApiList(c *gin.Context) {
 	db := c.Param("db")
 	conn, err := config.DBSet.GetDB(db)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	payload := apiListParams{}
 	apis := conn.GetQuery().Apis
 	start, size, err := GetRecordWindows(c, &payload)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	var (
@@ -134,32 +134,32 @@ func ApiList(c *gin.Context) {
 	}
 	if err != nil {
 		Logger(c).Error(err)
-		responseError(c, 500, err)
+		s.responseError(c, 500, err)
 		return
 	}
-	responseOkWithData(c, map[string]interface{}{
+	s.responseOkWithData(c, map[string]interface{}{
 		"count": count,
 		"item":  data,
 	})
 }
 
-func ApiGet(c *gin.Context) {
+func (s *Server) ApiGet(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		responseError(c, 400, fmt.Errorf("参数错误：%v", err))
+		s.responseError(c, 400, fmt.Errorf("参数错误：%v", err))
 		return
 	}
 	db := c.Param("db")
 	conn, err := config.DBSet.GetDB(db)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	apis := conn.GetQuery().Apis
 	var data *model.Apis
 	if data, err = apis.Where(apis.ID.Eq(uint(id))).First(); err != nil {
-		responseError(c, 500, err)
+		s.responseError(c, 500, err)
 		return
 	}
-	responseOkWithData(c, data)
+	s.responseOkWithData(c, data)
 }

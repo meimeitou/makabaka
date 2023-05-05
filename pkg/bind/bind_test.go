@@ -12,12 +12,12 @@ type myStruct struct {
 func TestBind(t *testing.T) {
 	s := myStruct{String: "awesome"}
 
-	err := Validate.Struct(s)
+	err := validate.Struct(s)
 	if err != nil {
 		fmt.Printf("Err(s):\n%+v\n", err)
 	}
 	s.String = "not awesome"
-	err = Validate.Struct(s)
+	err = validate.Struct(s)
 	if err != nil {
 		fmt.Printf("Err(s):\n%+v\n", err)
 	}
@@ -26,7 +26,7 @@ func TestBind(t *testing.T) {
 
 	rules := map[string]interface{}{"name": "required,min=8,max=32", "email": "gt=0", "age": "number,gt=14", "ss": ""}
 
-	errs := Validate.ValidateMap(user, rules)
+	errs := validate.ValidateMap(user, rules)
 
 	if len(errs) > 0 {
 		fmt.Println(errs)

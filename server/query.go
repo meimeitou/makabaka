@@ -38,23 +38,23 @@ func (q QueryParams) GetTest() (bool, error) {
 }
 
 // query for type template
-func Query(c *gin.Context) {
+func (s *Server) Query(c *gin.Context) {
 	body, err := getQueryParameters(c)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	// valid and get test
 	test, err := body.GetTest()
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 
 	db := c.Param("db")
 	conn, err := config.DBSet.GetDB(db)
 	if err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	apiName := c.Param("name")
@@ -62,13 +62,13 @@ func Query(c *gin.Context) {
 	res, err := query.GetWithNameAndMethod(apiName, c.Request.Method)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			responseError(c, 404, errors.New("接口不存在"))
+			s.responseError(c, 404, errors.New("api not exist"))
 			return
 		}
-		responseError(c, 500, err)
+		s.responseError(c, 500, err)
 		return
 	}
-
+	// externalData can set by upstream server
 	if externalData, exits := c.Get(externalData); exits {
 		if src, ok := externalData.(map[string]interface{}); ok {
 			maps.Copy(body, src)
@@ -76,19 +76,19 @@ func Query(c *gin.Context) {
 	}
 	// parameter valid
 	if err := bind.ValidateInput(body, res.SqlTemplateParameters); err != nil {
-		responseError(c, 400, err)
+		s.responseError(c, 400, err)
 		return
 	}
 	sqls, err := res.SqlTemplate.ToMapString()
 	if err != nil {
-		responseError(c, 500, err)
+		s.responseError(c, 500, err)
 		return
 	}
 	// sql exec
 	if test && config.Cfg.EnableTest {
-		queryTest(c, conn, sqls, body)
+		s.queryTest(c, conn, sqls, body)
 	} else {
-		queryMulti(c, conn, sqls, body)
+		s.queryMulti(c, conn, sqls, body)
 	}
 }
 
@@ -128,11 +128,11 @@ func getQueryParameters(c *gin.Context) (QueryParams, error) {
 			return nil, err
 		}
 	}
-	Logger(c).Info(body)
+	Logger(c).Debug(body)
 	return body, nil
 }
 
-func queryMulti(c *gin.Context, conn *db.Conn, sqls map[string]string, values map[string]interface{}) {
+func (s *Server) queryMulti(c *gin.Context, conn *db.Conn, sqls map[string]string, values map[string]interface{}) {
 	res := make(map[string]interface{})
 	keys := []string{}
 	rawsql := []string{}
@@ -140,7 +140,7 @@ func queryMulti(c *gin.Context, conn *db.Conn, sqls map[string]string, values ma
 		builder := exec.NewQueryBuilder(conn, sql, values)
 		data, err := builder.Exec()
 		if err != nil {
-			responseError(c, 400, err)
+			s.responseError(c, 400, err)
 			return
 		}
 		rawsql = append(rawsql, builder.GetRawSql())
@@ -153,31 +153,31 @@ func queryMulti(c *gin.Context, conn *db.Conn, sqls map[string]string, values ma
 	}
 	if len(res) == 1 { // one
 		if config.Cfg.EnableTest {
-			responseMsgWithData(c, strings.Join(rawsql, ";"), res[keys[0]])
+			s.responseMsgWithData(c, strings.Join(rawsql, ";"), res[keys[0]])
 			return
 		}
-		responseOkWithData(c, res[keys[0]])
+		s.responseOkWithData(c, res[keys[0]])
 	} else if len(res) > 1 { // more
 		if config.Cfg.EnableTest {
-			responseMsgWithData(c, strings.Join(rawsql, ";"), res)
+			s.responseMsgWithData(c, strings.Join(rawsql, ";"), res)
 			return
 		}
-		responseOkWithData(c, res)
+		s.responseOkWithData(c, res)
 	} else { // zero
-		responseOk(c)
+		s.responseOk(c)
 	}
 
 }
 
-func queryTest(c *gin.Context, conn *db.Conn, sqls map[string]string, values map[string]interface{}) {
+func (s *Server) queryTest(c *gin.Context, conn *db.Conn, sqls map[string]string, values map[string]interface{}) {
 	res := make(map[string]string)
 	for key, sql := range sqls {
 		raw, err := exec.NewQueryBuilder(conn, sql, values).TemplateParse()
 		if err != nil {
-			responseError(c, 400, err)
+			s.responseError(c, 400, err)
 			return
 		}
 		res[key] = raw
 	}
-	responseOkWithData(c, res)
+	s.responseOkWithData(c, res)
 }
