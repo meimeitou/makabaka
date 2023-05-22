@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -168,4 +169,16 @@ func (s *Server) ApiGet(c *gin.Context) {
 		return
 	}
 	s.responseOkWithData(c, data)
+}
+
+func (s *Server) healthz(c *gin.Context) {
+	s.responseOk(c)
+}
+
+func (s *Server) ready(c *gin.Context) {
+	if config.DBInited {
+		s.responseOk(c)
+		return
+	}
+	c.AbortWithStatus(http.StatusMisdirectedRequest)
 }

@@ -103,6 +103,8 @@ func (s *Server) RouterRegist(r *gin.Engine, prefix string) {
 	r.NoRoute(func(c *gin.Context) {
 		s.responseError(c, 404, fmt.Errorf("Page not found"))
 	})
+	r.GET("/healthz", s.healthz)
+	r.GET("/ready", s.ready)
 	root := r.Group(prefix)
 	{
 		// admin

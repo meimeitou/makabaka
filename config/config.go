@@ -12,6 +12,7 @@ import (
 )
 
 var DBSet = make(dBSet)
+var DBInited = false
 
 type dBSet map[string]*db.Conn
 
@@ -31,6 +32,7 @@ func InitDBSet(c *Config, logger *logrus.Logger) error {
 		logger.Infof("init proxy %s success!", item.Name)
 		DBSet[item.Name] = conn
 	}
+	DBInited = true
 	return nil
 }
 
