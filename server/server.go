@@ -17,22 +17,22 @@ import (
 )
 
 type Server struct {
-	logger            *logrus.Logger
-	addr              string
-	prefix            string
-	querymiddleware   []gin.HandlerFunc
-	adminMiddleware   gin.HandlerFunc
-	responseTag       ResInterface
-	checkAdminRequest IsAdminRequest
+	logger           *logrus.Logger
+	addr             string
+	prefix           string
+	querymiddleware  []gin.HandlerFunc
+	adminMiddleware  gin.HandlerFunc
+	responseTag      ResInterface
+	checkApinRequest CheckApiRequest
 }
 
 func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
 	return &Server{
-		logger:            logger,
-		addr:              addr,
-		prefix:            prefix,
-		responseTag:       &ResponseMsg{},
-		checkAdminRequest: defaultIsAdminRequest,
+		logger:           logger,
+		addr:             addr,
+		prefix:           prefix,
+		responseTag:      &ResponseMsg{},
+		checkApinRequest: defaultCheckApiRequest,
 	}
 }
 
@@ -40,17 +40,24 @@ func (r *Server) WithTag(tag ResInterface) {
 	r.responseTag = tag
 }
 
-// custom validation
-func (r *Server) BindValidator(tag string, fn validator.Func, callValidationEvenIfNull ...bool) {
+// add custom validation
+func (r *Server) RegisterBindValidator(tag string, fn validator.Func, callValidationEvenIfNull ...bool) {
 	bind.RegisterValidation(tag, fn, callValidationEvenIfNull...)
 }
 
+// add template functions
 func (r *Server) RegisterTemplateFunction(funcMap template.FuncMap) {
 	tpl.RegisterFunction(funcMap)
 }
 
+// middleware for query api
 func (s *Server) QueryMiddleware(m ...gin.HandlerFunc) {
 	s.querymiddleware = append(s.querymiddleware, m...)
+}
+
+// check api type auth
+func (s *Server) WithCheckApinRequest(f CheckApiRequest) {
+	s.checkApinRequest = f
 }
 
 func (s *Server) AdminMiddleware(m gin.HandlerFunc) {

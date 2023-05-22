@@ -68,7 +68,7 @@ func (s *Server) Query(c *gin.Context) {
 		s.responseError(c, 500, err)
 		return
 	}
-	if s.checkAdminRequest(c, string(res.ApiType)) {
+	if s.checkApinRequest(c, string(res.ApiType)) {
 		s.responseError(c, 403, errors.New("用户权限错误"))
 		return
 	}

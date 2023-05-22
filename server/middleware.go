@@ -25,10 +25,10 @@ func externalMsgMiddleware(logger *logrus.Logger) gin.HandlerFunc {
 	}
 }
 
-type IsAdminRequest func(c *gin.Context, apiType string) bool
+type CheckApiRequest func(c *gin.Context, apiType string) bool
 
 var (
-	defaultIsAdminRequest = func(c *gin.Context, apiType string) bool {
+	defaultCheckApiRequest = func(c *gin.Context, apiType string) bool {
 		return true
 	}
 )
