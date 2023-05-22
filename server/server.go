@@ -17,6 +17,7 @@ import (
 )
 
 type Server struct {
+	router           *gin.Engine
 	logger           *logrus.Logger
 	addr             string
 	prefix           string
@@ -27,7 +28,13 @@ type Server struct {
 }
 
 func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
+	r := gin.New()
+	r.Use(gLogger(logger))
+	r.Use(externalMsgMiddleware(logger))
+	r.Use(gin.Recovery())
+
 	return &Server{
+		router:           r,
 		logger:           logger,
 		addr:             addr,
 		prefix:           prefix,
@@ -64,16 +71,16 @@ func (s *Server) AdminMiddleware(m gin.HandlerFunc) {
 	s.adminMiddleware = m
 }
 
-func (s *Server) Run(g *run.Group) {
-	r := gin.New()
-	r.Use(gLogger(s.logger))
-	r.Use(externalMsgMiddleware(s.logger))
-	r.Use(gin.Recovery())
-	s.RouterRegist(r, s.prefix)
+// get gin router group
+func (s *Server) GetRouterGroup(prefix string) *gin.RouterGroup {
+	return s.router.Group(prefix)
+}
 
+func (s *Server) Run(g *run.Group) {
+	s.routerRegist(s.router, s.prefix)
 	srv := &http.Server{
 		Addr:         s.addr,
-		Handler:      r,
+		Handler:      s.router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -99,7 +106,7 @@ func (s *Server) Run(g *run.Group) {
 	)
 }
 
-func (s *Server) RouterRegist(r *gin.Engine, prefix string) {
+func (s *Server) routerRegist(r *gin.Engine, prefix string) {
 	r.NoRoute(func(c *gin.Context) {
 		s.responseError(c, 404, fmt.Errorf("Page not found"))
 	})
