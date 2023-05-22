@@ -16,6 +16,7 @@ type (
 		ID                    uint                   `json:"id"`
 		Name                  string                 `json:"name"`
 		Method                string                 `json:"method"`
+		ApiType               string                 `json:"apiType"`
 		Description           string                 `json:"description"`
 		SqlType               string                 `json:"sqlType"` // template chain
 		SqlTemplate           map[string]string      `json:"sqlTemplate"`
@@ -25,7 +26,8 @@ type (
 
 	apiListParams struct {
 		queryPage
-		Name string `form:"name"`
+		Name    string `form:"name"`
+		ApiType string `form:"apiType"`
 	}
 )
 
@@ -69,6 +71,7 @@ func (s *Server) ApiCreate(c *gin.Context) {
 			ID: data.ID,
 		},
 		Name:                  data.Name,
+		ApiType:               model.ApiType(data.ApiType),
 		Method:                data.Method,
 		Description:           data.Description,
 		SqlType:               sqlType,
@@ -122,16 +125,19 @@ func (s *Server) ApiList(c *gin.Context) {
 		s.responseError(c, 400, err)
 		return
 	}
+
+	sql := apis.Select(apis.ID, apis.Name, apis.Method, apis.SqlType, apis.CreatedAt)
+	if payload.Name != "" {
+		sql = sql.Where(apis.Name.Like(fmt.Sprintf("%%%s%%", payload.Name)))
+	}
+	if payload.ApiType != "" {
+		sql = sql.Where(apis.ApiType.Eq(payload.ApiType))
+	}
 	var (
 		data  []*model.Apis
 		count int64
 	)
-	sql := apis.Select(apis.ID, apis.Name, apis.Method, apis.SqlType, apis.CreatedAt)
-	if payload.Name != "" {
-		data, count, err = sql.Where(apis.Name.Like(fmt.Sprintf("%%%s%%", payload.Name))).FindByPage(start, size)
-	} else {
-		data, count, err = sql.FindByPage(start, size)
-	}
+	data, count, err = sql.FindByPage(start, size)
 	if err != nil {
 		Logger(c).Error(err)
 		s.responseError(c, 500, err)

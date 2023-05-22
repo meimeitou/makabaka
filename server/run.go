@@ -17,20 +17,22 @@ import (
 )
 
 type Server struct {
-	logger          *logrus.Logger
-	addr            string
-	prefix          string
-	querymiddleware []gin.HandlerFunc
-	adminMiddleware gin.HandlerFunc
-	responseTag     ResInterface
+	logger            *logrus.Logger
+	addr              string
+	prefix            string
+	querymiddleware   []gin.HandlerFunc
+	adminMiddleware   gin.HandlerFunc
+	responseTag       ResInterface
+	checkAdminRequest IsAdminRequest
 }
 
 func NewServer(logger *logrus.Logger, addr, prefix string) *Server {
 	return &Server{
-		logger:      logger,
-		addr:        addr,
-		prefix:      prefix,
-		responseTag: &ResponseMsg{},
+		logger:            logger,
+		addr:              addr,
+		prefix:            prefix,
+		responseTag:       &ResponseMsg{},
+		checkAdminRequest: defaultIsAdminRequest,
 	}
 }
 

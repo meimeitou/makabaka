@@ -10,6 +10,8 @@ import (
 
 	"gorm.io/gorm"
 
+	"gorm.io/gen"
+
 	"gorm.io/plugin/dbresolver"
 )
 
@@ -18,15 +20,15 @@ var (
 	Apis *apis
 )
 
-func SetDefault(db *gorm.DB) {
-	*Q = *Use(db)
+func SetDefault(db *gorm.DB, opts ...gen.DOOption) {
+	*Q = *Use(db, opts...)
 	Apis = &Q.Apis
 }
 
-func Use(db *gorm.DB) *Query {
+func Use(db *gorm.DB, opts ...gen.DOOption) *Query {
 	return &Query{
 		db:   db,
-		Apis: newApis(db),
+		Apis: newApis(db, opts...),
 	}
 }
 
@@ -46,15 +48,18 @@ func (q *Query) clone(db *gorm.DB) *Query {
 }
 
 func (q *Query) ReadDB() *Query {
-	return q.clone(q.db.Clauses(dbresolver.Read))
+	return q.ReplaceDB(q.db.Clauses(dbresolver.Read))
 }
 
 func (q *Query) WriteDB() *Query {
-	return q.clone(q.db.Clauses(dbresolver.Write))
+	return q.ReplaceDB(q.db.Clauses(dbresolver.Write))
 }
 
 func (q *Query) ReplaceDB(db *gorm.DB) *Query {
-	return q.clone(db)
+	return &Query{
+		db:   db,
+		Apis: q.Apis.replaceDB(db),
+	}
 }
 
 type queryCtx struct {
@@ -72,10 +77,14 @@ func (q *Query) Transaction(fc func(tx *Query) error, opts ...*sql.TxOptions) er
 }
 
 func (q *Query) Begin(opts ...*sql.TxOptions) *QueryTx {
-	return &QueryTx{q.clone(q.db.Begin(opts...))}
+	tx := q.db.Begin(opts...)
+	return &QueryTx{Query: q.clone(tx), Error: tx.Error}
 }
 
-type QueryTx struct{ *Query }
+type QueryTx struct {
+	*Query
+	Error error
+}
 
 func (q *QueryTx) Commit() error {
 	return q.db.Commit().Error

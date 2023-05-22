@@ -25,6 +25,8 @@ func SqlTypeFromStr(tp string) (SqlType, error) {
 	}
 }
 
+type ApiType string
+
 type DbType string
 
 const (
@@ -50,6 +52,7 @@ type Database struct {
 type Apis struct {
 	Modelx
 	DeletedAt             soft_delete.DeletedAt `json:"deleteAt" gorm:"uniqueIndex:idx_api_name"`
+	ApiType               ApiType               `json:"apiType" gorm:"column:api_type;not null;index"`
 	Name                  string                `json:"name" gorm:"column:api_name;type:varchar(200);uniqueIndex:idx_api_name;not null"` // api name
 	Method                string                `json:"method" gorm:"column:method;type:varchar(50);not null;index"`                     // api name// http method
 	Description           string                `json:"description" gorm:"column:description;type:varchar(200);not null"`                // description

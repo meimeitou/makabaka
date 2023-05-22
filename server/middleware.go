@@ -24,3 +24,11 @@ func externalMsgMiddleware(logger *logrus.Logger) gin.HandlerFunc {
 		c.Set("Logger", logger)
 	}
 }
+
+type IsAdminRequest func(c *gin.Context, apiType string) bool
+
+var (
+	defaultIsAdminRequest = func(c *gin.Context, apiType string) bool {
+		return true
+	}
+)

@@ -20,10 +20,10 @@ import (
 	"github.com/meimeitou/makabaka/model"
 )
 
-func newApis(db *gorm.DB) apis {
+func newApis(db *gorm.DB, opts ...gen.DOOption) apis {
 	_apis := apis{}
 
-	_apis.apisDo.UseDB(db)
+	_apis.apisDo.UseDB(db, opts...)
 	_apis.apisDo.UseModel(&model.Apis{})
 
 	tableName := _apis.apisDo.TableName()
@@ -32,6 +32,7 @@ func newApis(db *gorm.DB) apis {
 	_apis.CreatedAt = field.NewTime(tableName, "created_at")
 	_apis.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_apis.DeletedAt = field.NewUint(tableName, "deleted_at")
+	_apis.ApiType = field.NewString(tableName, "api_type")
 	_apis.Name = field.NewString(tableName, "api_name")
 	_apis.Method = field.NewString(tableName, "method")
 	_apis.Description = field.NewString(tableName, "description")
@@ -53,6 +54,7 @@ type apis struct {
 	CreatedAt             field.Time
 	UpdatedAt             field.Time
 	DeletedAt             field.Uint
+	ApiType               field.String
 	Name                  field.String
 	Method                field.String
 	Description           field.String
@@ -80,6 +82,7 @@ func (a *apis) updateTableName(table string) *apis {
 	a.CreatedAt = field.NewTime(table, "created_at")
 	a.UpdatedAt = field.NewTime(table, "updated_at")
 	a.DeletedAt = field.NewUint(table, "deleted_at")
+	a.ApiType = field.NewString(table, "api_type")
 	a.Name = field.NewString(table, "api_name")
 	a.Method = field.NewString(table, "method")
 	a.Description = field.NewString(table, "description")
@@ -103,11 +106,12 @@ func (a *apis) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (a *apis) fillFieldMap() {
-	a.fieldMap = make(map[string]field.Expr, 11)
+	a.fieldMap = make(map[string]field.Expr, 12)
 	a.fieldMap["id"] = a.ID
 	a.fieldMap["created_at"] = a.CreatedAt
 	a.fieldMap["updated_at"] = a.UpdatedAt
 	a.fieldMap["deleted_at"] = a.DeletedAt
+	a.fieldMap["api_type"] = a.ApiType
 	a.fieldMap["api_name"] = a.Name
 	a.fieldMap["method"] = a.Method
 	a.fieldMap["description"] = a.Description
@@ -118,6 +122,11 @@ func (a *apis) fillFieldMap() {
 }
 
 func (a apis) clone(db *gorm.DB) apis {
+	a.apisDo.ReplaceConnPool(db.Statement.ConnPool)
+	return a
+}
+
+func (a apis) replaceDB(db *gorm.DB) apis {
 	a.apisDo.ReplaceDB(db)
 	return a
 }
@@ -133,6 +142,7 @@ type IApisDo interface {
 	ReadDB() IApisDo
 	WriteDB() IApisDo
 	As(alias string) gen.Dao
+	Session(config *gorm.Session) IApisDo
 	Columns(cols ...field.Expr) gen.Columns
 	Clauses(conds ...clause.Expression) IApisDo
 	Not(conds ...gen.Condition) IApisDo
@@ -186,22 +196,19 @@ type IApisDo interface {
 	GetWithNameAndMethod(name string, method string) (result *model.Apis, err error)
 }
 
-//SELECT * FROM @@table WHERE api_name = @name AND method = @method limit 1
+// SELECT * FROM @@table WHERE api_name = @name AND method = @method limit 1
 func (a apisDo) GetWithNameAndMethod(name string, method string) (result *model.Apis, err error) {
-	params := make(map[string]interface{}, 0)
+	var params []interface{}
 
 	var generateSQL strings.Builder
-	params["name"] = name
-	params["method"] = method
-	generateSQL.WriteString("SELECT * FROM apis WHERE api_name = @name AND method = @method limit 1 ")
+	params = append(params, name)
+	params = append(params, method)
+	generateSQL.WriteString("SELECT * FROM apis WHERE api_name = ? AND method = ? limit 1 ")
 
 	var executeSQL *gorm.DB
-	if len(params) > 0 {
-		executeSQL = a.UnderlyingDB().Raw(generateSQL.String(), params).Take(&result)
-	} else {
-		executeSQL = a.UnderlyingDB().Raw(generateSQL.String()).Take(&result)
-	}
+	executeSQL = a.UnderlyingDB().Raw(generateSQL.String(), params...).Take(&result) // ignore_security_alert
 	err = executeSQL.Error
+
 	return
 }
 
@@ -219,6 +226,10 @@ func (a apisDo) ReadDB() IApisDo {
 
 func (a apisDo) WriteDB() IApisDo {
 	return a.Clauses(dbresolver.Write)
+}
+
+func (a apisDo) Session(config *gorm.Session) IApisDo {
+	return a.withDO(a.DO.Session(config))
 }
 
 func (a apisDo) Clauses(conds ...clause.Expression) IApisDo {
