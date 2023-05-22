@@ -127,7 +127,7 @@ func (s *Server) ApiList(c *gin.Context) {
 		return
 	}
 
-	sql := apis.Select(apis.ID, apis.Name, apis.Method, apis.SqlType, apis.CreatedAt)
+	sql := apis.Select(apis.ID, apis.Name, apis.Method, apis.ApiType, apis.Description, apis.CreatedAt)
 	if payload.Name != "" {
 		sql = sql.Where(apis.Name.Like(fmt.Sprintf("%%%s%%", payload.Name)))
 	}
