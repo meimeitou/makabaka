@@ -129,10 +129,10 @@ func (s *Server) ApiList(c *gin.Context) {
 
 	sql := apis.Select(apis.ID, apis.Name, apis.Method, apis.ApiType, apis.Description, apis.CreatedAt)
 	if payload.Name != "" {
-		sql = sql.Where(apis.Name.Like(fmt.Sprintf("%%%s%%", payload.Name)))
+		sql = sql.Where(apis.Name.Like(fmt.Sprintf("%%%s%%", payload.Name))).Order(apis.CreatedAt.Desc())
 	}
 	if payload.ApiType != "" {
-		sql = sql.Where(apis.ApiType.Eq(payload.ApiType))
+		sql = sql.Where(apis.ApiType.Eq(payload.ApiType)).Order(apis.CreatedAt.Desc())
 	}
 	var (
 		data  []*model.Apis
